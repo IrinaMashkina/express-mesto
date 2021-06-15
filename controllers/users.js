@@ -1,31 +1,35 @@
-const User = require('../models/user');
+const User = require("../models/user");
 
-const getAllUsers = (req,res) => {
+module.exports.getAllUsers = (req, res) => {
   User.find({})
-  .then((users) => {
-    if (users.length === 0) {
-      res.send("Пользователи не найдены")
-      return;
-    }
-    res.status(200).send(users)})
-  .catch((err) => res.send(err))
-}
+    .then((users) => {
+      if (users.length === 0) {
+        res.send("Пользователи не найдены");
+        return;
+      }
+      res.status(200).send({data: users});
+    })
+    .catch(() => res.status(500).send({ message: "Произошла ошибка" }));
+};
 
-const getUserById = (req,res) => {
+module.exports.getUserById = (req, res) => {
   User.findById(req.params.id)
-  .then((user) => {
-    if (!user) {
-      res.send("Пользователь не найден")
-    }
-    res.status(200).send(user)})
-  .catch((err) => res.send(err))
-}
+    .then((user) => {
+      if (!user) {
+        res.send("Такого пользователя не существует");
+      }
+      res.status(200).send({ data: user});
+    })
+    .catch(() => res.status(500).send({ message: "Произошла ошибка" }));
+};
 
-const createNewUser = (req, res) => {
+module.exports.createNewUser = (req, res) => {
   const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar }).then((newUser) => {
-    res.status(200).send(newUser)
-  }).catch((err) => res.send(err))
-}
+  console.log(`body: ${req.body}`)
+  User.create({ name, about, avatar })
+    .then((newUser) => {
+      res.status(200).send({newUser});
+    })
+    .catch(() => res.status(500).send({ message: "Произошла ошибка добавления нового пользователя" }));
+};
 
-module.exports = { getAllUsers, getUserById, createNewUser };
