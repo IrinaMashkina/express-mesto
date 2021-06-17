@@ -4,10 +4,10 @@ module.exports.getCards = (req, res) => {
   Card.find({})
     .then((cards) => {
       if (cards.length === 0) {
-        res.send({ message: "Карточки не найдены" });
+        res.status(404).send({ message: "Карточки не найдены" });
         return;
       }
-      res.status(200).send({ data: cards });
+      res.send({ data: cards });
     })
     .catch(() => res.status(500).send({ message: "Произошла ошибка" }));
 };
@@ -18,10 +18,12 @@ module.exports.createNewCard = (req, res) => {
     .then((card) => {
       res.send(card);
     })
-    .catch((err) =>
+    .catch((err) => {
+      const ERROR_CODE = 400;
+      if (err.name === 'ValidationError') return res.status(ERROR_CODE).send({ message: `Переданы некорректные данные: ${err}` })
       res
         .status(500)
-        .send({ message: `Произошла ошибка добавления новой карточки: ${err}` })
+        .send({ message: `Произошла ошибка добавления новой карточки: ${err}` })}
     );
 };
 

@@ -41,6 +41,7 @@ app.use(usersRoutes);
 app.use(cardsRoutes);
 
 app.use('*', (req,res) => {
+
   res.status(404).send({message:"Не найден данный ресурс"})
 } );
 
