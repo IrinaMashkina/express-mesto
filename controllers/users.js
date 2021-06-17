@@ -1,10 +1,11 @@
 const User = require("../models/user.js");
+const { ERROR_CODE } = require("../utils/constants");
 
 const getAllUsers = (req, res) => {
   User.find({})
     .then((users) => {
       if (users.length === 0) {
-        res.status(404).send({message: "Пользователи не найдены"});
+        res.send({ message: "Пользователи не найдены" });
         return;
       }
       res.send(users);
@@ -13,15 +14,16 @@ const getAllUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  console.log(req.params);
   User.findById(req.params.id)
-    .then((user) => {
-      if (!user) {
-        res.status(404).send({message: "Такого пользователя не существует"});
-      }
-      res.send(user);
-    })
-    .catch(() => res.status(500).send({ message: "Произошла ошибка" }));
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err.name === "CastError")
+        return res
+          .status(ERROR_CODE)
+          .send({ message: "Такого пользователя не существует" });
+
+      res.status(500).send({ message: "Произошла ошибка" });
+    });
 };
 
 const createNewUser = (req, res) => {
@@ -30,12 +32,12 @@ const createNewUser = (req, res) => {
     .then((newUser) => {
       res.send(newUser);
     })
-    .catch(() => {
-      const ERROR_CODE = 400;
+    .catch((err) => {
       if (err.name === "ValidationError")
         return res
           .status(ERROR_CODE)
-          .send({ message: `Переданы некорректные данные: ${err}` });
+          .send({ message: "Переданы некорректные данные" });
+
       res
         .status(500)
         .send({ message: "Произошла ошибка добавления нового пользователя" });
@@ -43,17 +45,23 @@ const createNewUser = (req, res) => {
 };
 
 const updateUser = (req, res) => {
-  console.log(req.user._id);
   const { name, about } = req.body;
 
-  User.findByIdAndUpdate(req.user._id, { name, about })
-    .then((user) => res.send({ user }))
+  User.findByIdAndUpdate(
+    req.user._id,
+    { name, about },
+    {
+      new: true, // обработчик then получит на вход обновлённую запись
+      runValidators: true, // данные будут валидированы перед изменением
+    }
+  )
+    .then((user) => res.send(user))
     .catch((err) => {
-      const ERROR_CODE = 400;
+      console.log(err);
       if (err.name === "ValidationError")
         return res
           .status(ERROR_CODE)
-          .send({ message: `Переданы некорректные данные: ${err}` });
+          .send({ message: "Переданы некорректные данные" });
       res
         .status(500)
         .send({ message: "Произошла ошибка обновления данных о пользователе" });
@@ -62,14 +70,21 @@ const updateUser = (req, res) => {
 
 const updateAvatar = (req, res) => {
   const { avatar } = req.body;
-  User.findByIdAndUpdate(req.user._id, { avatar })
-    .then((newAvatar) => res.send({ newAvatar }))
+  User.findByIdAndUpdate(
+    req.user._id,
+    { avatar },
+    {
+      new: true, // обработчик then получит на вход обновлённую запись
+      runValidators: true, // данные будут валидированы перед изменением
+    }
+  )
+    .then((newAvatar) => res.send(newAvatar))
     .catch((err) => {
-      const ERROR_CODE = 400;
       if (err.name === "ValidationError")
-        return res
-          .status(ERROR_CODE)
-          .send({ message: `Переданы некорректные данные: ${err}` });
+        return res.status(ERROR_CODE).send({
+          message: "Переданы некорректные данные",
+        });
+
       res.status(500).send({ message: "Произошла ошибка обновления аватара" });
     });
 };
