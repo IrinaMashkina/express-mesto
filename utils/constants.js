@@ -1,1 +1,3 @@
-module.exports.ERROR_CODE = 400;
+module.exports.BAD_REQUEST_ERROR = 400;
+module.exports.NOT_FOUND_ERROR = 404;
+module.exports.SERVER_ERROR = 500;

@@ -1,5 +1,9 @@
 const User = require("../models/user.js");
-const { ERROR_CODE } = require("../utils/constants");
+const {
+  BAD_REQUEST_ERROR,
+  SERVER_ERROR,
+  NOT_FOUND_ERROR,
+} = require("../utils/constants");
 
 const getAllUsers = (req, res) => {
   User.find({})
@@ -10,19 +14,26 @@ const getAllUsers = (req, res) => {
       }
       res.send(users);
     })
-    .catch(() => res.status(500).send({ message: "Произошла ошибка" }));
+    .catch(() =>
+      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" })
+    );
 };
 
 const getUserById = (req, res) => {
   User.findById(req.params.id)
-    .then((user) => res.send(user))
+    .then((user) => {
+      if (!user) {
+        res
+          .status(NOT_FOUND_ERROR)
+          .send({ message: "Пользователя с таким id не существует" });
+      }
+      res.send(user);
+    })
     .catch((err) => {
       if (err.name === "CastError")
-        return res
-          .status(ERROR_CODE)
-          .send({ message: "Такого пользователя не существует" });
+        return res.status(BAD_REQUEST_ERROR).send({ message: "Невалидный id" });
 
-      res.status(500).send({ message: "Произошла ошибка" });
+      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
     });
 };
 
@@ -35,12 +46,10 @@ const createNewUser = (req, res) => {
     .catch((err) => {
       if (err.name === "ValidationError")
         return res
-          .status(ERROR_CODE)
+          .status(BAD_REQUEST_ERROR)
           .send({ message: "Переданы некорректные данные" });
 
-      res
-        .status(500)
-        .send({ message: "Произошла ошибка добавления нового пользователя" });
+      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
     });
 };
 
@@ -60,11 +69,11 @@ const updateUser = (req, res) => {
       console.log(err);
       if (err.name === "ValidationError")
         return res
-          .status(ERROR_CODE)
-          .send({ message: "Переданы некорректные данные" });
-      res
-        .status(500)
-        .send({ message: "Произошла ошибка обновления данных о пользователе" });
+          .status(BAD_REQUEST_ERROR)
+          .send({
+            message: "Переданы некорректные данные при обновлении профиля",
+          });
+      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
     });
 };
 
@@ -81,11 +90,11 @@ const updateAvatar = (req, res) => {
     .then((newAvatar) => res.send(newAvatar))
     .catch((err) => {
       if (err.name === "ValidationError")
-        return res.status(ERROR_CODE).send({
-          message: "Переданы некорректные данные",
+        return res.status(BAD_REQUEST_ERROR).send({
+          message: "Переданы некорректные данные при обновлении аватара",
         });
 
-      res.status(500).send({ message: "Произошла ошибка обновления аватара" });
+      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
     });
 };
 

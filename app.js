@@ -11,6 +11,7 @@ const { PORT = 3000 } = process.env;
 const usersRoutes = require("./routes/users.js");
 const cardsRoutes = require("./routes/cards.js");
 
+const { NOT_FOUND_ERROR } = require("./utils/constants");
 
 // подключаемся к серверу mongo
 mongoose.connect('mongodb://localhost:27017/mestodb', {
@@ -42,7 +43,7 @@ app.use(cardsRoutes);
 
 app.use('*', (req,res) => {
 
-  res.status(404).send({message:"Не найден данный ресурс"})
+  res.status(NOT_FOUND_ERROR).send({message:"Не найден данный ресурс"})
 } );
 
 app.listen(PORT, () => {
