@@ -66,13 +66,10 @@ const updateUser = (req, res) => {
   )
     .then((user) => res.send(user))
     .catch((err) => {
-      console.log(err);
       if (err.name === "ValidationError")
-        return res
-          .status(BAD_REQUEST_ERROR)
-          .send({
-            message: "Переданы некорректные данные при обновлении профиля",
-          });
+        return res.status(BAD_REQUEST_ERROR).send({
+          message: "Переданы некорректные данные при обновлении профиля",
+        });
       res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
     });
 };

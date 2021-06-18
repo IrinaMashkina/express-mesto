@@ -1,5 +1,9 @@
 const Card = require("../models/card");
-const { BAD_REQUEST_ERROR, SERVER_ERROR, NOT_FOUND_ERROR } = require("../utils/constants");
+const {
+  BAD_REQUEST_ERROR,
+  SERVER_ERROR,
+  NOT_FOUND_ERROR,
+} = require("../utils/constants");
 
 module.exports.getCards = (req, res) => {
   Card.find({})
@@ -10,7 +14,9 @@ module.exports.getCards = (req, res) => {
       }
       res.send(cards);
     })
-    .catch(() => res.status(SERVER_ERROR).send({ message: "Произошла ошибка" }));
+    .catch(() =>
+      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" })
+    );
 };
 
 module.exports.createNewCard = (req, res) => {
@@ -24,9 +30,7 @@ module.exports.createNewCard = (req, res) => {
         return res
           .status(BAD_REQUEST_ERROR)
           .send({ message: "Переданы некорректные данные" });
-      res.status(SERVER_ERROR).send({
-        message: `Произошла ошибка добавления новой карточки: ${err}`,
-      });
+      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
     });
 };
 
@@ -35,8 +39,9 @@ module.exports.deleteCard = (req, res) => {
 
     .then((card) => {
       if (!card) {
-
-        res.status(NOT_FOUND_ERROR).send({ message: "Нет карточки с данным id" });
+        res
+          .status(NOT_FOUND_ERROR)
+          .send({ message: "Нет карточки с данным id" });
         return;
       }
       res.send(card);
@@ -60,13 +65,14 @@ module.exports.likeCard = (req, res) =>
   )
     .then((card) => {
       if (!card) {
-        res.status(BAD_REQUEST_ERROR).send({ message: "Нет карточки с данным id" });
+        res
+          .status(BAD_REQUEST_ERROR)
+          .send({ message: "Нет карточки с данным id" });
         return;
       }
       res.send(card);
     })
     .catch((err) => {
-      console.groupCollapsed(err.name);
       if (err.name === "CastError") {
         res
           .status(BAD_REQUEST_ERROR)
@@ -84,7 +90,9 @@ module.exports.dislikeCard = (req, res) =>
   )
     .then((card) => {
       if (!card) {
-        res.status(BAD_REQUEST_ERROR).send({ message: "Нет карточки с данным id" });
+        res
+          .status(BAD_REQUEST_ERROR)
+          .send({ message: "Нет карточки с данным id" });
         return;
       }
       res.send(card);
