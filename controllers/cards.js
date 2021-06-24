@@ -1,9 +1,7 @@
+const BadRequestError = require("../errors/bad-request-err");
+const NotFoundError = require("../errors/not-found-err");
+
 const Card = require("../models/card");
-const {
-  BAD_REQUEST_ERROR,
-  SERVER_ERROR,
-  NOT_FOUND_ERROR,
-} = require("../utils/constants");
 
 module.exports.getCards = (req, res) => {
   Card.find({})
@@ -14,9 +12,7 @@ module.exports.getCards = (req, res) => {
       }
       res.send(cards);
     })
-    .catch(() =>
-      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" })
-    );
+    .catch(next);
 };
 
 module.exports.createNewCard = (req, res) => {
@@ -26,12 +22,11 @@ module.exports.createNewCard = (req, res) => {
       res.send(card);
     })
     .catch((err) => {
-      if (err.name === "ValidationError")
-        return res
-          .status(BAD_REQUEST_ERROR)
-          .send({ message: "Переданы некорректные данные" });
-      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
-    });
+      if (err.name === "ValidationError") {
+        throw new BadRequestError("Переданы некорректные данные");
+      }
+    })
+    .catch(next);
 };
 
 module.exports.deleteCard = (req, res) => {
@@ -39,48 +34,36 @@ module.exports.deleteCard = (req, res) => {
 
     .then((card) => {
       if (!card) {
-        res
-          .status(NOT_FOUND_ERROR)
-          .send({ message: "Нет карточки с данным id" });
-        return;
+        throw new NotFoundError("Нет карточки с данным id");
       }
       res.send(card);
     })
     .catch((err) => {
       if (err.name === "CastError") {
-        res
-          .status(BAD_REQUEST_ERROR)
-          .send({ message: "Такого id быть не может" });
-        return;
+        throw new BadRequestError("Невалидный id");
       }
-      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
-    });
+    })
+    .catch(next);
 };
 
 module.exports.likeCard = (req, res) =>
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+    { $addToSet: { likes: req.user._id } },
     { new: true }
   )
     .then((card) => {
       if (!card) {
-        res
-          .status(BAD_REQUEST_ERROR)
-          .send({ message: "Нет карточки с данным id" });
-        return;
+        throw new NotFoundError("Нет карточки с данным id");
       }
       res.send(card);
     })
     .catch((err) => {
       if (err.name === "CastError") {
-        res
-          .status(BAD_REQUEST_ERROR)
-          .send({ message: "Такого id быть не может" });
-        return;
+        throw new BadRequestError("Невалидный id");
       }
-      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
-    });
+    })
+    .catch(next);
 
 module.exports.dislikeCard = (req, res) =>
   Card.findByIdAndUpdate(
@@ -90,19 +73,13 @@ module.exports.dislikeCard = (req, res) =>
   )
     .then((card) => {
       if (!card) {
-        res
-          .status(BAD_REQUEST_ERROR)
-          .send({ message: "Нет карточки с данным id" });
-        return;
+        throw new NotFoundError("Нет карточки с данным id");
       }
       res.send(card);
     })
     .catch((err) => {
       if (err.name === "CastError") {
-        res
-          .status(BAD_REQUEST_ERROR)
-          .send({ message: "Такого id быть не может" });
-        return;
+        throw new BadRequestError("Невалидный id");
       }
-      res.status(SERVER_ERROR).send({ message: "Произошла ошибка" });
-    });
+    })
+    .catch(next);
