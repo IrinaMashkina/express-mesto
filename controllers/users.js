@@ -5,10 +5,8 @@ const jwt = require("jsonwebtoken");
 const NotFoundError = require("../errors/not-found-err");
 const BadRequestError = require("../errors/bad-request-err");
 const DubbleError = require("../errors/dubble-err");
-const UnauthorizedError = require("../errors/unauthorized-err");
-// const ForbiddenError = require("/errors/forbidden-err");
 
-const getAllUsers = (req, res) => {
+const getAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
       if (users.length === 0) {
@@ -20,9 +18,9 @@ const getAllUsers = (req, res) => {
     .catch(next);
 };
 
-const getMyInfo = (req, res) => {
-  const token = req.headers.authorization;
-  console.log(req.headers.authorization);
+const getMyInfo = (req, res, next) => {
+  const token = req.cookies.jwt;
+  console.log(token);
 
   return User.findById(req.user._id)
     .then((user) => {
@@ -35,45 +33,38 @@ const getMyInfo = (req, res) => {
       if (err.name === "CastError") {
         throw new BadRequestError("Невалидный id");
       }
-    }).catch(next);
+    })
+    .catch(next);
 };
 
-const getUserById = (req, res, next) => User.findById(req.params.id)
-  .then((user) => {
-    if (!user) {
-      throw new NotFoundError('Нет пользователя с таким id');
-    }
-    return res.status(200).send(user);
-  })
-  .catch((err) => {
-    if (err.name === 'CastError') {
-      throw new BadRequestError('Id пользователя не валидный');
-    }
-  })
-  .catch(next);
-
-const createNewUser = (req, res) => {
-  const { name, about, avatar, email, password } = req.body;
-  bcrypt
-    .hash(password, 10)
-    .then((hash) => {
-      User.create({ name, about, avatar, email, password: hash }).then(
-        (newUser) => {
-          res.send(newUser);
-        }
-      );
+const getUserById = (req, res, next) =>
+  User.findById(req.params.id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError("Нет пользователя с таким id");
+      }
+      return res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === "ValidationError" || err.name === "CastError") {
+      if (err.name === "CastError") {
+        throw new BadRequestError("Id пользователя не валидный");
+      }
+    })
+    .catch(next);
+
+const createNewUser = (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
+  bcrypt.hash(password, 10).then(hash => User.create({ name, about, avatar, email, password: hash })).then(newUser => res.send(newUser)).catch((err) => {
+      if (err.name === "MongoError" || err.code === 11000) {
+        throw new DubbleError("Пользователь с таким email уже зарегистрирован");
+      } else if (err.name === "ValidationError" || err.name === "CastError") {
         throw new BadRequestError("Переданы некорректные данные");
       }
-      if (err.name === "MongoError" && err.code === 11000) {
-        throw new DubbleError("Пользователь с таким email уже существует");
-      }
-    }).catch(next);
+    })
+    .catch(next);
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(
@@ -89,10 +80,11 @@ const updateUser = (req, res) => {
       if (err.name === "ValidationError") {
         throw new BadRequestError("Переданы некорректные данные");
       }
-    }).catch(next);
+    })
+    .catch(next);
 };
 
-const updateAvatar = (req, res) => {
+const updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -107,24 +99,26 @@ const updateAvatar = (req, res) => {
       if (err.name === "ValidationError") {
         throw new BadRequestError("Переданы некорректные данные");
       }
-    }).catch(next);
+    })
+    .catch(next);
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      // аутентификация успешна! пользователь в переменной user
       const token = jwt.sign({ _id: user._id }, "some-secret-key", {
         expiresIn: "7d",
       });
-
-      // вернём токен
-      res.send({ token });
+      res
+        .cookie("jwt", token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+          sameSite: true,
+        })
+        .send(user);
     })
-    .catch((err) => {
-      throw new UnauthorizedError("Ошибка авторизации")
-    }).catch(next);
+    .catch(next);
 };
 
 module.exports = {

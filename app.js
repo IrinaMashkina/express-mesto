@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const mongoose = require('mongoose');
 
 const app = express();
@@ -7,12 +8,12 @@ const app = express();
 const { PORT = 3000 } = process.env;
 
 const {login, createNewUser} = require('./controllers/users.js');
-const auth = require('./middlewares/auth');
+const {auth} = require('./middlewares/auth');
 const usersRoutes = require("./routes/users.js");
 const cardsRoutes = require("./routes/cards.js");
 
 const NotFoundError = require("./errors/not-found-err");
-
+const { errors } = require('celebrate');
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
@@ -29,12 +30,13 @@ app.use(bodyParser.urlencoded({
   extended: true
 }))
 
+app.use(cookieParser());
 
 app.post('/signin', login);
 app.post('/signup', createNewUser);
 app.use(auth, usersRoutes);
 app.use(auth, cardsRoutes);
-
+app.use(errors());
 app.use('*', (req,res) => {
 
   throw new NotFoundError("Не найден данный ресурс")
