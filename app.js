@@ -37,7 +37,7 @@ app.post('/signup', createNewUser);
 app.use(auth, usersRoutes);
 app.use(auth, cardsRoutes);
 app.use(errors());
-app.use('*', (req,res) => {
+app.use('*', () => {
 
   throw new NotFoundError("Не найден данный ресурс")
 } );
@@ -54,6 +54,7 @@ app.use((err, req, res, next) => {
         ? 'На сервере произошла ошибка'
         : message
     });
+    next();
 });
 
 

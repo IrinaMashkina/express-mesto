@@ -19,7 +19,6 @@ const getAllUsers = (req, res, next) => {
 };
 
 const getMyInfo = (req, res, next) => {
-  const token = req.cookies.jwt;
 
   return User.findById(req.user._id)
     .then((user) => {
