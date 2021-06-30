@@ -35,13 +35,16 @@ module.exports.deleteCard = (req, res, next) => {
     .then((card) => {
       if (!card) {
         throw new NotFoundError("Нет карточки с данным id");
-      }
-      if (card.owner.toString() !== req.user._id.toString()) {
+      } else  if (card.owner.toString() !== req.user._id.toString()) {
         throw new ForbiddenError("Недостаточно прав");
       }
       Card.findByIdAndRemove(req.params.cardId)
         .then((deletedCard) => res.send(deletedCard))
         .catch(next);
+    }).catch((err) => {
+      if (err.name === "CastError") {
+        throw new BadRequestError("Невалидный id");
+      } else next(err);
     })
     .catch(next);
 };
@@ -61,7 +64,7 @@ module.exports.likeCard = (req, res, next) =>
     .catch((err) => {
       if (err.name === "CastError") {
         throw new BadRequestError("Невалидный id");
-      }
+      } else next(err);
     })
     .catch(next);
 
@@ -80,6 +83,6 @@ module.exports.dislikeCard = (req, res, next) =>
     .catch((err) => {
       if (err.name === "CastError") {
         throw new BadRequestError("Невалидный id");
-      }
+      } else next(err);
     })
     .catch(next);

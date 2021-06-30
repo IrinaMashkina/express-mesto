@@ -20,14 +20,16 @@ const getAllUsers = (req, res, next) => {
 
 const getMyInfo = (req, res, next) => {
   const token = req.cookies.jwt;
-  console.log(token);
 
   return User.findById(req.user._id)
     .then((user) => {
+      console.log(user)
       if (!user) {
         throw new NotFoundError("Нет пользователя с таким id");
       }
-      res.send(user);
+        res.send(user);
+
+
     })
     .catch((err) => {
       if (err.name === "CastError") {
@@ -43,12 +45,12 @@ const getUserById = (req, res, next) =>
       if (!user) {
         throw new NotFoundError("Нет пользователя с таким id");
       }
-      return res.status(200).send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === "CastError") {
         throw new BadRequestError("Id пользователя не валидный");
-      }
+      } else next(err);
     })
     .catch(next);
 
@@ -73,13 +75,14 @@ const updateUser = (req, res, next) => {
     {
       new: true,
       runValidators: true,
+      context: 'query'
     }
   )
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === "ValidationError") {
         throw new BadRequestError("Переданы некорректные данные");
-      }
+      } else next(err);
     })
     .catch(next);
 };
