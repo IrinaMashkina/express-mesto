@@ -3,6 +3,8 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const mongoose = require('mongoose');
 
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+
 const app = express();
 
 const { PORT = 3000 } = process.env;
@@ -32,10 +34,15 @@ app.use(bodyParser.urlencoded({
 
 app.use(cookieParser());
 
+app.use(requestLogger); // подключаем логгер запросов
+
 app.post('/signin', login);
 app.post('/signup', createNewUser);
 app.use(auth, usersRoutes);
 app.use(auth, cardsRoutes);
+
+app.use(errorLogger);
+
 app.use(errors());
 app.use('*', () => {
 
